@@ -7,6 +7,9 @@
 require 'action_pack'
 require 'support/examples'
 
+# Used (without the proper require statements in Rails 3.2) in ActionDispatch::ExceptionWrapper
+require 'active_support/core_ext/class'
+
 RSpec.configure do |config|
   config.run_all_when_everything_filtered = true
   config.filter_run :focus

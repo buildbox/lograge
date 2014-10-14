@@ -2,6 +2,7 @@ require 'json'
 
 require 'active_support/core_ext/class/attribute'
 require 'active_support/log_subscriber'
+require 'action_dispatch/middleware/exception_wrapper'
 
 module Lograge
   class RequestLogSubscriber < ActiveSupport::LogSubscriber
@@ -58,7 +59,8 @@ module Lograge
         { status: payload[:status].to_i }
       elsif payload[:exception]
         exception, message = payload[:exception]
-        { status: 500, error: "#{exception}:#{message}" }
+        status = ActionDispatch::ExceptionWrapper.status_code_for_exception(exception)
+        { status: status, error: "#{exception}:#{message}" }
       else
         { status: 0 }
       end

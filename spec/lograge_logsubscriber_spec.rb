@@ -5,6 +5,9 @@ require 'active_support/notifications'
 require 'active_support/core_ext/string'
 require 'logger'
 
+# Used (without the proper require statements) in ActionDispatch::ExceptionWrapper
+require 'rack/utils'
+
 describe Lograge::RequestLogSubscriber do
   let(:log_output) { StringIO.new }
   let(:logger) do
@@ -120,14 +123,25 @@ describe Lograge::RequestLogSubscriber do
       expect(log_output.string).to match(/db=0.02/)
     end
 
-    it 'adds a 500 status when an exception occurred' do
+    it 'adds the mapped error status when an Rails exception occurred' do
       event.payload[:status] = nil
       event.payload[:exception] = ['AbstractController::ActionNotFound', 'Route not found']
       subscriber.process_action(event)
 
-      expect(log_output.string).to match(/status=500 /)
+      expect(log_output.string).to match(/status=404 /)
       expect(log_output.string).to match(
         /error='AbstractController::ActionNotFound:Route not found' /
+      )
+    end
+
+    it 'adds the mapped error status when a non-Rails exception occurred' do
+      event.payload[:status] = nil
+      event.payload[:exception] = ['SomeError', 'Some error occured']
+      subscriber.process_action(event)
+
+      expect(log_output.string).to match(/status=500 /)
+      expect(log_output.string).to match(
+        /error='SomeError:Some error occured' /
       )
     end
 
